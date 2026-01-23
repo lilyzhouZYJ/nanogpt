@@ -1,6 +1,8 @@
-# NanoGPT
+# AustenGPT
 
 This repo implements a simple GPT, based on Andrej Karpathy's [NanoGPT](https://github.com/karpathy/nanoGPT/tree/master).
+
+It will be trained on Jane Austen's texts to generate more Jane Austen!
 
 ## GPT-walkthrough
 
@@ -34,8 +36,8 @@ advarer.”
 “She safely, and c
 ```
 
-## NanoGPT
+## AustenGPT
 
-The [nanogpt](./nanogpt/) directory contains an implementation of NanoGPT.
+The [austen-gpt](./austen-gpt/) directory contains an implementation of AustenGPT.
 
-For a more detailed description of its implementation, see [nanogpt/README.md](./nanogpt/README.md).
+For a more detailed description of its implementation, see [austen-gpt/README.md](./austen-gpt/README.md).

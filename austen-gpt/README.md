@@ -1,14 +1,14 @@
-# NanoGPT
+# AustenGPT
 
 ## Architecture
 
 ![architecture.pnb](../asset/architecture.png)
 
-This diagram shows the architecture we implement here. On the left is the architecture described in the "Attention is all you need" paper. We will omit the cross-attention block, so our actual architecture is shown by the diagram on the right, with one caveat: the convention now is to apply LayerNorm before the attention layer and the FFN layer, instead of after.
+This diagram shows the architecture we implement here. On the left is the architecture described in the "Attention is all you need" paper. We will omit the cross-attention block, so our actual architecture is shown by the diagram on the right, with one caveat: the convention now is to apply LayerNorm *before* the attention layer and the FFN layer, instead of after.
 
 > *Diagram from https://www.ericjwang.com/assets/images/gpt_arch.png*
 
-## Transformer Block
+## Transformer Block ([block.py](/austen-gpt/block.py))
 
 The transformer block is everything in the gray box shown in the diagram above. It consists of 4 layers:
 
@@ -21,7 +21,7 @@ We also use residual connection and dropout layers.
 
 ### Multi-head self-attention
 
-> Implementation: `class CausalSelfAttention` ([block.py](./block.py))
+> Implementation: `class CausalSelfAttention`
 
 **Causal** self-attention just means each token can only attend to **previous** tokens. This is what's used in **decoder** models (e.g. GPT), as opposed to **encoder** models, where each token can attend to **all** tokens.
 
@@ -50,7 +50,7 @@ In our CausalSelfAttention block, we introduce dropout twice: once on the "weigh
 
 ### LayerNorm
 
-> Implementation: `class LayerNorm` ([block.py](./block.py))
+> Implementation: `class LayerNorm`
 
 LayerNorm normalizes each feature vector to have mean=0 and variance=1. This helps stabilize training and prevent vanishing/exploding gradients, especially in deep networks.
 
@@ -66,7 +66,7 @@ Layer 10 output: still normalized around 0 with variance 1
 
 ### Feed-forward network (FFN)
 
-> Implementation: `class MLP` ([block.py](./block.py))
+> Implementation: `class MLP`
 
 MLP is the most common implementation of feed-forward network. Our MLP implementation consists of 3 layers:
 
@@ -97,4 +97,74 @@ output = W2 @ GELU(W1 @ x)  # Now it's non-linear!
 
 We also apply dropout on the output of the MLP block.
 
-## Combining transformer blocks into GPT
+---
+
+## Combining transformer blocks into GPT ([gpt.py](/austen-gpt/gpt.py))
+
+### GPT class constructor
+
+**Transformer components**:
+
+- **Word token embedding (wte)**: maps token IDs to embeddings (`vocab_size` tokens, each mapped to `n_embd` dimensions)
+- **Word position embedding (wpe)**: maps token positions to embeddings (`block_size` positions, each mapped to `n_embd` dimensions)
+- **Dropout layer**: applied after adding token embeddings and position embeddings
+- **Hidden layers**: transformer blocks, each block has attention + FFN (MLP)
+- **Final LayerNorm**: applied after all transformer blocks
+
+```python
+self.transformer = nn.ModuleDict(dict[str, Module](
+    wte = nn.Embedding(config.vocab_size, config.n_embd),
+    wpe = nn.Embedding(config.block_size, config.n_embd),
+    drop = nn.Dropout(config.dropout),
+    h = nn.ModuleList([Block(config) for _ in range(config.n_layer)]),
+    ln_f = LayerNorm(config.n_embd, bias=config.bias),
+))
+```
+
+**Language-modeling head**:
+
+- Maps embeddings (of dimension `n_embd`) to logits (of dimension `vocab_size`) to predict the next token
+
+```python
+self.lm_head = nn.Linear(config.n_embd, config.vocab_size, bias=False)
+```
+
+**Weight tying**:
+
+- Shares weights between input embedding (`wte`) and output projection (`lm_head`)
+    - `wte`: maps token ID to embeddings
+    - `lm_head`: maps embedding to token logits
+- Using the same weights intuitively makes sense, because *if tokens have similar embeddings, they should also have similar probabilities when predicting the next token (i.e. similar logits)*
+- Benefit: fewer parameters
+
+```python
+self.transformer.wte.weight = self.lm_head.weight
+```
+
+**Weight initialization**:
+
+- Initializes all parameters with small random values (e.g. normal distribution)
+- In our case, we apply `_init_weights` function to all parameters
+
+```python
+self.apply(self._init_weights)
+```
+
+**Scaled initialization for residual projections**: (GPT-2 paper)
+
+- Finds all `projection` linear layers (in attention and FFN)
+- Initializes them with smaller standard deviation
+- Formula: `std = 0.02 / sqrt (2 * n_layer)`
+- Why?
+    - Deeper networks (more layers) need smaller initial weights
+    - Prevents values from exploding as they pass through many residual connections
+    - Helps training stability
+- Why projection layers?
+    - These layers are right before **residual connections** (other than dropout layers)
+    - Because residual connections **adds** to the main pathway, if the residual contribution is too large, they will accumulate and cause values to explode
+
+```python
+for pn, p in self.named_parameters():
+    if pn.endswith('projection.weight'):
+        torch.nn.init.normal_(p, mean=0.0, std=0.02/math.sqrt(2 * config.n_layer))
+```

@@ -29,7 +29,7 @@ class CausalSelfAttention(nn.Module):
         # Output projection: basically "mixing" the heads' outputs together.
         # Input: (B, T, n_embd), i.e. (B, T, n_head * head_size)
         # Output: (B, T, n_embd)
-        self.projection_layer = nn.Linear(n_embd, n_embd, bias)
+        self.projection = nn.Linear(n_embd, n_embd, bias)
 
         # Regularization: dropout to prevent overfitting
         self.attention_dropout = nn.Dropout(dropout)
@@ -83,7 +83,7 @@ class CausalSelfAttention(nn.Module):
         output = output.view(B, T, C)                # (B, T, C) = (B, T, n_embd)
 
         # Output projection: basically "mixing" the heads' outputs together
-        output = self.projection_layer(output)
+        output = self.projection(output)
 
         # Residual dropout:
         # this dropout is applied to the output before residual connection (in Block)
