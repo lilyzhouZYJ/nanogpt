@@ -101,7 +101,9 @@ We also apply dropout on the output of the MLP block.
 
 ## Combining transformer blocks into GPT ([gpt.py](/austen-gpt/gpt.py))
 
-### GPT class constructor
+The model is implemented in `class GPT` in [gpt.py](/austen-gpt/gpt.py).
+
+### (1) GPT class constructor
 
 **Transformer components**:
 
@@ -168,3 +170,58 @@ for pn, p in self.named_parameters():
     if pn.endswith('projection.weight'):
         torch.nn.init.normal_(p, mean=0.0, std=0.02/math.sqrt(2 * config.n_layer))
 ```
+
+### (2) Forward pass: `forward`
+
+The `forward` function implements the forward pass of the GPT model for both *training mode* (provides desired targets) and *inference mode* (not targets).
+
+**Arguments**:
+
+- `input_ids`: input token ids, of dimension (batch_size, sequence_length)
+- `target`: of dimension (batch_size, sequence_length)
+
+**Steps**:
+
+1. Map `input_ids` to token and position embeddings
+2. Add token and position embeddings (with dropout)
+3. Go through hidden layers (transformer blocks)
+4. Apply final LayerNorm
+5. If *training mode*: compute logits for all positions and calculate loss
+6. If *inference mode*: only compute logits for the last position
+
+### (3) Optimizer (`configure_optimizers`)
+
+Creates an optimizer with different **weight decay settings** for different parameter types.
+
+1. Any parameters with **dimensions >= 2** will be weight-decayed.
+    - `decay_params`
+    - i.e. weight matrices in linear layers, embedding tables
+
+2. Any parameters with **dimensions < 2** will not be weight-decayed.
+    - `nodecay_params`
+    - i.e. biases, layer normalization weights and biases
+
+**Why this distinction?**
+
+Weight decay is a regularization technique that **penalizes large weights**, by pushing weights towards 0.
+
+```python
+# During optimization: weight_decay pushes weight towards 0
+weight = weight - lr * gradient - lr * weight_decay * weight
+```
+
+This should be applied to:
+- weight matrices (prevent overfitting)
+- embeddings (prevent overfitting)
+
+This should NOT be applied to:
+- biases (usually small, don't need regularization)
+- LayerNorm parameters (interferes with normalization)
+
+### (4) Token generation: `generate`
+
+The `generate` function generates tokens autoregressively, one at a time, and feeding output back into the model.
+
+Some supported features:
+- **Temperature**: controlls randomness (higher = more random)
+- **Top-k filtering**: limits choices to top k most likely tokens
