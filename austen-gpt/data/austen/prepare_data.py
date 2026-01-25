@@ -8,7 +8,8 @@ data_urls = [
     'https://raw.githubusercontent.com/lilyzhouZYJ/austen-gpt/main/dataset/emma.txt',
     'https://raw.githubusercontent.com/lilyzhouZYJ/austen-gpt/main/dataset/pride_and_prejudice.txt',
     'https://raw.githubusercontent.com/lilyzhouZYJ/austen-gpt/main/dataset/sense_and_sensibility.txt',
-    'https://raw.githubusercontent.com/lilyzhouZYJ/austen-gpt/main/dataset/mansfield_park.txt'
+    'https://raw.githubusercontent.com/lilyzhouZYJ/austen-gpt/main/dataset/mansfield_park.txt',
+    'https://raw.githubusercontent.com/lilyzhouZYJ/austen-gpt/main/dataset/persuasion.txt',
 ]
 
 # Download and combine all files from data_urls into a single input.txt
@@ -47,5 +48,5 @@ train_ids.tofile(os.path.join(script_dir, 'train.bin'))
 val_ids.tofile(os.path.join(script_dir, 'val.bin'))
 
 # For Austen dataset:
-# Train has 738,907 tokens
-# Val has 78,705 tokens
+# Train has 768,888 tokens
+# Val has 83,742 tokens
