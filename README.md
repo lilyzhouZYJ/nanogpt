@@ -4,9 +4,9 @@ This repo implements a simple GPT, based on Andrej Karpathy's [NanoGPT](https://
 
 It will be trained on Jane Austen's texts to generate more Jane Austen!
 
-## GPT-walkthrough
+## Starting point: character-level GPT
 
-A good starting point is the [gpt-walkthrough.ipynb](gpt-walkthrough.ipynb) notebook, which contains notes from Andrej Karpathy's [Let's build GPT](https://www.youtube.com/watch?v=kCc8FmEb1nY&list=PLAqhIrjkxbuWI23v9cThsA9GvCAUhRvKZ&index=9) video. This notebook starts from a simple bigram model, then progressively introduces self-attention, multi-head self-attention, as well as optimizations such as LayerNorm. It also includes pretty detailed notes on each of the steps.
+A good starting point is the [gpt-walkthrough.ipynb](gpt-walkthrough.ipynb) notebook, which walks through the implementation of a **character-level GPT**, based on Andrej Karpathy's [Let's build GPT](https://www.youtube.com/watch?v=kCc8FmEb1nY&list=PLAqhIrjkxbuWI23v9cThsA9GvCAUhRvKZ&index=9) tutorial. This notebook starts from a simple **bigram model**, then progressively introduces **self-attention**, **multi-head self-attention**, as well as optimizations such as **LayerNorm**. The notebook also includes detailed notes on each of the steps.
 
 The GPT in the notebook is a **character-level model** trained on **Jane Austen's *Emma***. By the end of the walkthrough, you can generate text like:
 

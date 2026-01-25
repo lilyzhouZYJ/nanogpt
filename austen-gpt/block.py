@@ -149,10 +149,10 @@ class Block(nn.Module):
     - Layer Normalization
     - Feed-Forward Network (MLP)
     """
-    def __init__(self, n_embd, block_size, dropout, bias = False):
+    def __init__(self, n_embd, n_head, block_size, dropout, bias = False):
         super().__init__()
         self.ln_1 = LayerNorm(n_embd, bias=bias)
-        self.attn = CausalSelfAttention(n_embd, block_size, dropout, bias)
+        self.attn = CausalSelfAttention(n_embd, n_head, block_size, dropout, bias)
         self.ln_2 = LayerNorm(n_embd, bias=bias)
         self.mlp = MLP(n_embd, dropout, bias)
 

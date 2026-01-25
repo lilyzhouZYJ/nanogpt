@@ -1,0 +1,53 @@
+# Training configuration for GPT model
+# This config can be overridden via command line: python train.py batch_size=32 compile=False
+#
+# For more details on each config setting, see docs/training_config.md.
+
+# Output and logging
+out_dir: 'out'                  # output directory for checkpoints and logs
+log_interval: 1                 # how often to log loss
+eval_interval: 2000             # how often to evaluate on eval set
+eval_iters: 200                 # how many batches to evaluate on
+eval_only: False                # run one evaluation only; no training
+always_save_checkpoint: True    # always save a checkpoint after each evaluation
+init_from: 'scratch'            # 'scratch' or 'resume' or 'gpt2*' (start from pretrained weights)
+
+# wandb (Weights and Biases) logging
+wandb_log: False
+wandb_project: 'austen-gpt'
+wandb_run_name: 'gpt2-austen-12layer'
+
+# Data
+dataset: 'austen'               # dataset to use; looks for data/{dataset}/train.bin and val.bin
+batch_size: 12                  # minibatch size
+block_size: 1024                # context window size
+gradient_accumulation_steps: 40  # used to simulate larger batch sizes; effective batch size = batch_size * gradient_accumulation_steps
+
+# Model architecture
+n_layer: 12                     # number of transformer layers
+n_head: 12                      # number of attention heads per block; must divide n_embd evenly
+n_embd: 768                     # embedding dimension
+dropout: 0.0                    # dropout rate
+bias: False                     # use bias inside LayerNorm and Linear layers
+
+# AdamW optimizer
+learning_rate: 6e-4              # max learning rate
+max_iters: 600000                # total number of training iterations
+weight_decay: 1e-1               # L2 regularization strength; prevents overfitting by penalizing large weights
+beta1: 0.9                       # first moment decay rate for AdamW
+beta2: 0.95                      # second moment decay rate for AdamW
+grad_clip: 1.0                   # clip gradients at this value, or disable if == 0.0; prevents exploding gradients
+
+# Learning rate decay settings
+decay_lr: True                   # whether to decay the learning rate
+warmup_iters: 2000               # how many steps to warm up for
+lr_decay_iters: 600000           # should be ~= max_iters per Chinchilla
+min_lr: 6e-5                     # minimum learning rate, should be ~= learning_rate/10 per Chinchilla
+
+# DDP settings
+backend: 'nccl'                  # distributed training backend: 'nccl', 'gloo', etc.
+
+# System settings
+device: 'cuda'                   # device to use: 'cpu', 'cuda', 'cuda:0', 'cuda:1' etc., or try 'mps' on macbooks
+dtype: 'bfloat16'                # data type: 'float32', 'bfloat16', or 'float16'. If bfloat16 is not supported, will fallback to float16
+compile: True                    # whether to use PyTorch 2.0 to compile the model to be faster
