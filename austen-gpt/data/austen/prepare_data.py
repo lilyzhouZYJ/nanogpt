@@ -3,15 +3,29 @@ import requests
 import tiktoken
 import numpy as np
 
-# Download the Austen dataset
+# Dataset
+data_urls = [
+    'https://raw.githubusercontent.com/lilyzhouZYJ/austen-gpt/main/dataset/emma.txt',
+    'https://raw.githubusercontent.com/lilyzhouZYJ/austen-gpt/main/dataset/pride_and_prejudice.txt',
+    'https://raw.githubusercontent.com/lilyzhouZYJ/austen-gpt/main/dataset/sense_and_sensibility.txt',
+    'https://raw.githubusercontent.com/lilyzhouZYJ/austen-gpt/main/dataset/mansfield_park.txt'
+]
+
+# Download and combine all files from data_urls into a single input.txt
 script_dir = os.path.dirname(__file__)
 input_file_path = os.path.join(script_dir, 'input.txt')
 if not os.path.exists(input_file_path):
     # Ensure directory exists
     os.makedirs(script_dir, exist_ok=True)
-    data_url = 'https://raw.githubusercontent.com/lilyzhouZYJ/austen-gpt/main/dataset/emma.txt'
-    with open(input_file_path, 'w', encoding='utf-8') as f:
-        f.write(requests.get(data_url).text)
+    # Download and combine all files from URLs
+    with open(input_file_path, 'w', encoding='utf-8') as outfile:
+        for url in data_urls:
+            print(f"Downloading {url}...")
+            response = requests.get(url)
+            response.raise_for_status()  # Raise an exception for bad status codes
+            outfile.write(response.text)
+            outfile.write('\n\n')  # Add separation between files
+    print(f"Combined dataset saved to {input_file_path}")
 
 with open(input_file_path, 'r', encoding='utf-8') as f:
     data = f.read()
@@ -32,6 +46,6 @@ val_ids = np.array(val_ids, dtype=np.uint16)
 train_ids.tofile(os.path.join(script_dir, 'train.bin'))
 val_ids.tofile(os.path.join(script_dir, 'val.bin'))
 
-# For emma.txt:
-# Train has 207,109 tokens
-# Val has 23,094 tokens
+# For Austen dataset:
+# Train has 738,907 tokens
+# Val has 78,705 tokens
